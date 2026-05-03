@@ -3,7 +3,7 @@ name: Rolling update
 # Rolling should happen on pushes/prs to main, the CI branch and additionaly as a manual dispatch
 on:
   push:
-    branches: ["main", "feature/ci", "feature/next"]
+    branches: ["main", "feature/ci", "next"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
