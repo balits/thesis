@@ -49,6 +49,7 @@ runs:
           --namespace $NAMESPACE \
           --create-namespace \
           --set traefik.enabled=true \
+          --set prometheus.enabled=true \
           --set image.tag=${{ inputs.image_tag }} \
           --set config.adminAuthToken="${{ inputs.admin_token }}" \
           --set-string appVersion=${{ inputs.image_tag }} \
