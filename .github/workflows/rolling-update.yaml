@@ -59,7 +59,6 @@ jobs:
     name: Deploy to Kubernetes
     runs-on: ubuntu-latest
     needs: build-img
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/next')) || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v6
       - name: Deploy K8S to CIVO
@@ -74,7 +73,6 @@ jobs:
     name: Extract config values from the helm chart  
     runs-on: ubuntu-latest
     needs: deploy-k8s
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/next')) || github.event_name == 'workflow_dispatch'
     outputs:
       kave_ot_slot_count:  ${{ steps.extract-values.outputs.kave_ot_slot_count }}
       kave_ot_slot_size:   ${{ steps.extract-values.outputs.kave_ot_slot_size }}
@@ -93,7 +91,7 @@ jobs:
     name: Deploy UI to Github Pages
     runs-on: ubuntu-latest
     needs: extract-helm-config-values
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/next')) || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: read
       pages: write
