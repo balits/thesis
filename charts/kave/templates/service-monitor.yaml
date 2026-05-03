@@ -11,7 +11,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- include "kave.selectorLabels" . | nindent 6 }}
+      {{- include "kave.labels" . | nindent 6 }}
   endpoints:
     - port: {{ .Values.ports.http }}
       path: /metrics
