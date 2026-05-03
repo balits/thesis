@@ -85,3 +85,16 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
+
+prometheus:
+  enabled: false
+  serviceMonitor:
+    labels:
+      release: prometheus
+    interval: 10s
+    scrapeTimeout: 10s
+
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false

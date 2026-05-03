@@ -201,6 +201,21 @@ wait-cluster-ready:
 		--namespace $(NAMESPACE) \
 		--kubeconfig $(KUBECONFIG)
 
+next:
+	@echo "feature/next: update cluster..."
+	helm upgrade $(APP_NAME) $(CHART) \
+		--kubeconfig $(KUBECONFIG) \
+		--namespace $(NAMESPACE) \
+		--install \
+		--reuse-values	\
+		--set prometheus.enabled=true \
+		--set traefik.enabled=true \
+		--set image.tag=$(IMAGE_TAG) \
+		--set-string appVersion=$(IMAGE_TAG) \
+		-- wait \
+		--timeout 10m
+
+
 k9s:
 	./bin/k9s --kubeconfig .kube/config 
 fmt:
