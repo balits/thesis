@@ -25,6 +25,20 @@ runs:
     - name: Install helm
       uses: azure/setup-helm@v4
 
+    - name: Install yq
+      shell: bash
+      run: |
+        wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        chmod +x /usr/local/bin/yq
+
+    - name: Patch Chart.yaml appVersion
+      shell: bash
+      env:
+        APP_VERSION: ${{ inputs.image_tag }}
+      run: |
+        yq eval '.appVersion = strenv(APP_VERSION)' -i ./charts/kave/Chart.yaml
+        echo "Patched appVersion to: $(yq eval '.appVersion' ./charts/kave/Chart.yaml)"
+
     - name: Lint helm chart
       shell: bash
       run: make helm-lint
@@ -52,7 +66,6 @@ runs:
           --set prometheus.enabled=true \
           --set image.tag=${{ inputs.image_tag }} \
           --set config.adminAuthToken="${{ inputs.admin_token }}" \
-          --set-string appVersion=${{ inputs.image_tag }} \
           --wait \
           --timeout 15m
     

@@ -1,0 +1,45 @@
+{{/* ============================================================
+     Pre-computed values used below
+     ============================================================ */}}
+{{- $quorum := div (add .Values.voters.replicas 1) 2 -}}
+{{- $ns := .Release.Namespace -}}
+{{- $domain := .Values.kaveDomain -}}
+{{- $httpPort := .Values.ports.http -}}
+
+============================================================
+  kave {{ .Chart.Version }} deployed as "{{ .Release.Name }}"
+============================================================
+
+Chart:      {{ .Chart.Name }}-{{ .Chart.Version }}
+App Version: {{ .Chart.AppVersion }}
+Namespace:  {{ $ns }}
+Voters:     {{ .Values.voters.replicas }}  (quorum = {{ $quorum }})
+
+--- Accessing the cluster -----------------------------------
+
+  # 1. Port-forward to a voter pod:
+  kubectl port-forward -n {{ $ns }} kave-voter-0 {{ $httpPort }}:{{ $httpPort }}
+
+  # 2. Verify it's healthy:
+  curl http://localhost:{{ $httpPort }}/readyz
+
+{{- if .Values.traefik.enabled }}
+
+  # 3. External access (Traefik + Let's Encrypt):
+  curl https://{{ $domain }}/readyz
+{{- else }}
+
+  # Local dev: use port-forward only. For external access:
+  #   helm upgrade {{ .Release.Name }} . --set traefik.enabled=true
+{{- end }}
+
+{{- if .Values.prometheus.enabled }}
+
+--- Monitoring ----------------------------------------------
+
+  # Prometheus UI:
+  kubectl port-forward -n {{ $ns }} svc/{{ .Release.Name }}-prometheus 9090
+
+  # Grafana (admin/admin):
+  kubectl port-forward -n {{ $ns }} svc/{{ .Release.Name }}-grafana 3000
+{{- end }}

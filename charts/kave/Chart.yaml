@@ -5,7 +5,7 @@ description: >
   watches and secret keys protected by Oblivious Transfer.
 type: application
 version: 0.2.3 # bumped on each change to the chart
-appVersion: "tag-dev"
+appVersion: "" # patched by CI with git short SHA
 
 keywords:
   - raft

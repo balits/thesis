@@ -1,16 +1,15 @@
 {{- if .Values.traefik.enabled -}}
-apiVersion: traefik.containo.us/v1alpha1
+{{- $apiGroup := .Values.traefik.apiGroup | default "traefik.io" -}}
+apiVersion: {{ $apiGroup }}/v1alpha1
 kind: Middleware
 metadata:
     name: kave-ratelimiter
 spec:
-    # above go rate limits, since
-    # it would be a "last resort"
     rateLimit:
         average: 500
         burst: 1000
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: {{ $apiGroup }}/v1alpha1
 kind: IngressRoute
 metadata:
     name: {{ include "kave.name" . }}

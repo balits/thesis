@@ -6,6 +6,8 @@
 
 # 3) Ordered startup (podManagementPolicy: OrderedReady):
 #   pods start one at 0 -> 1 -> 2 so pod 0 bootstraps
+{{ include "kave.validateSecrets" . }}
+{{ include "kave.validateReplicas" . }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

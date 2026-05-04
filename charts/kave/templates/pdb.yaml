@@ -1,4 +1,6 @@
-# a cluster of 3 needs at least 2 nodes to reach quorom
+# PDB ensures at least quorum pods remain during voluntary disruptions.
+# Formula: quorum = floor(N/2) + 1 = div(N+1, 2)
+#   N=1 → 1  |  N=3 → 2  |  N=5 → 3  |  N=7 → 4
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -6,7 +8,7 @@ metadata:
   labels:
     {{- include "kave.labels" . | nindent 4 }}
 spec:
-  minAvailable: {{ .Values.pdb.minAvailable }}
+  minAvailable: {{ div (add .Values.voters.replicas 1) 2 }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kave.name" . }}

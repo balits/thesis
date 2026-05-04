@@ -18,6 +18,7 @@ spec:
   publishNotReadyAddresses: true
   selector:
     app.kubernetes.io/name: {{ include "kave.name" . }}
+    kave/role: voter
   ports:
     - name: raft
       port: {{ .Values.ports.raft }}

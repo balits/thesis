@@ -11,7 +11,7 @@ REGISTRY = ghcr.io
 REPO = balits/kave
 IMG_NAME_NO_REGISTRY=$(REPO)
 IMG_NAME = $(REGISTRY)/$(IMG_NAME_NO_REGISTRY)
-IMAGE_TAG ?= latest
+IMAGE_TAG ?= ""
 
 .DEFAULT_GOAL := help
 
@@ -139,6 +139,8 @@ helm-uninstall:
 	helm uninstall kave -n kave --ignore-not-found --kubeconfig $(KUBECONFIG)
 
 helm-upgrade-install:
+	@echo ">> patching Chart.yaml appVersion..."
+	yq eval '.appVersion = "$(IMAGE_TAG)"' -i $(CHART)/Chart.yaml
 	@echo ">> upgrading/installing chart: ${APP_NAME}..."
 	helm upgrade $(APP_NAME) $(CHART) --install \
 		--kubeconfig $(KUBECONFIG) \
@@ -203,6 +205,7 @@ wait-cluster-ready:
 
 next:
 	@echo "feature/next: update cluster..."
+	yq eval '.appVersion = "$(IMAGE_TAG)"' -i $(CHART)/Chart.yaml
 	helm upgrade $(APP_NAME) $(CHART) \
 		--kubeconfig $(KUBECONFIG) \
 		--namespace $(NAMESPACE) \
@@ -211,7 +214,6 @@ next:
 		--set prometheus.enabled=true \
 		--set traefik.enabled=true \
 		--set image.tag=$(IMAGE_TAG) \
-		--set-string appVersion=$(IMAGE_TAG) \
 		-- wait \
 		--timeout 10m
 
