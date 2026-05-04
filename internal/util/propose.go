@@ -16,7 +16,7 @@ var ErrPropose = errors.New("propose error")
 // anélkük, hogy egy *raft.Raft példányt tároljunk minden egyes structunkban
 type ProposeFunc func(ctx context.Context, cmd command.Command) (*command.Result, error)
 
-const applyTimeout = 5 * time.Millisecond
+const applyTimeout = 100 * time.Millisecond
 
 func NewProposeFunc(r *raft.Raft) ProposeFunc {
 	return func(ctx context.Context, cmd command.Command) (*command.Result, error) {

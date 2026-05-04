@@ -134,13 +134,13 @@ func (s *kvSvc) Put(ctx context.Context, req api.PutRequest) (*api.PutResponse, 
 
 	result, err := s.propose(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("put failed: %v", err)
+		return nil, fmt.Errorf("put failed: %w", err)
 	}
 	if result.Error != nil {
-		return nil, fmt.Errorf("put failed: %v", result.Error)
+		return nil, fmt.Errorf("put failed: %w", result.Error)
 	}
 	if result.Put == nil {
-		return nil, fmt.Errorf("put failed: %v", fsm.ErrNilApplyResult)
+		return nil, fmt.Errorf("put failed: %w", fsm.ErrNilApplyResult)
 	}
 
 	return &api.PutResponse{
@@ -168,13 +168,13 @@ func (s *kvSvc) Delete(ctx context.Context, req api.DeleteRequest) (*api.DeleteR
 
 	result, err := s.propose(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("delete failed: %v", err)
+		return nil, fmt.Errorf("delete failed: %w", err)
 	}
 	if result.Error != nil {
-		return nil, fmt.Errorf("delete failed: %v", result.Error)
+		return nil, fmt.Errorf("delete failed: %w", result.Error)
 	}
 	if result.Delete == nil {
-		return nil, fmt.Errorf("delete failed: %v", fsm.ErrNilApplyResult)
+		return nil, fmt.Errorf("delete failed: %w", fsm.ErrNilApplyResult)
 	}
 
 	return &api.DeleteResponse{
@@ -201,13 +201,13 @@ func (s *kvSvc) Txn(ctx context.Context, req api.TxnRequest) (*api.TxnResponse, 
 
 	result, err := s.propose(ctx, cmd)
 	if err != nil {
-		return nil, fmt.Errorf("txn failed: %v", err)
+		return nil, fmt.Errorf("txn failed: %w", err)
 	}
 	if result.Error != nil {
-		return nil, fmt.Errorf("txn failed: %v", result.Error)
+		return nil, fmt.Errorf("txn failed: %w", result.Error)
 	}
 	if result.Txn == nil {
-		return nil, fmt.Errorf("txn failed: %v", fsm.ErrNilApplyResult)
+		return nil, fmt.Errorf("txn failed: %w", fsm.ErrNilApplyResult)
 	}
 
 	return &api.TxnResponse{
