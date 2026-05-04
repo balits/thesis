@@ -95,6 +95,46 @@ prometheus:
     scrapeTimeout: 10s
 
 kube-prometheus-stack:
+  alertmanager:
+    enabled: false
+  defaultRules:
+    create: false
+  coreDns:
+    enabled: false
+  kubeDns:
+    enabled: false
+  kubeApiServer:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+
   prometheus:
     prometheusSpec:
-      serviceMonitorSelectorNilUsesHelmValues: false
+      retention: 1h
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 2Gi
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "100m"
+        limits:
+          memory: "512Mi"
+          cpu: "256m"
+  grafana:
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "100m"

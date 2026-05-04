@@ -21,9 +21,3 @@ maintainers:
 
 sources:
   - https://github.com/balits/kave
-
-dependencies:
-- name: kube-prometheus-stack
-  version: "84.5.0"
-  repository: "https://prometheus-community.github.io/helm-charts"
-  condition: prometheus.enabled
