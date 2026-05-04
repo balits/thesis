@@ -42,4 +42,7 @@ Voters:     {{ .Values.voters.replicas }}  (quorum = {{ $quorum }})
 
   # Grafana (admin/admin):
   kubectl port-forward -n {{ $ns }} svc/{{ .Release.Name }}-grafana 3000
+
+  # Pre-loaded dashboards:
+  #   "Kave" — write/read throughput, Raft health, storage metrics
 {{- end }}

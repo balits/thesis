@@ -1,0 +1,12 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-dashboards
+  labels:
+    {{- include "kave.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+data:
+  kave.json: |
+{{ .Files.Get "dashboards/kave.json" | indent 4 }}
+{{- end }}
