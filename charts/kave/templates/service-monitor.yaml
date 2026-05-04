@@ -13,8 +13,8 @@ spec:
     matchLabels:
       {{- include "kave.labels" . | nindent 6 }}
   endpoints:
-    - port: {{ .Values.ports.http }}
+    - port: {{ .Values.ports.http | quote }}
       path: /metrics
       interval: {{ .Values.prometheus.serviceMonitor.interval }}
-      scareTimeout: {{ .Values.prometheus.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ .Values.prometheus.serviceMonitor.scrapeTimeout }}
 {{- end }}
