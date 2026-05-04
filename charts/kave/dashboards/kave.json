@@ -1,0 +1,315 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Write Throughput",
+      "type": "timeseries",
+      "id": 1,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(kave_kv_committed_writes_total[5s])",
+          "legendFormat": "Writes/sec"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Read Throughput",
+      "type": "timeseries",
+      "id": 2,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(kave_kv_reads_total[5s])",
+          "legendFormat": "Reads/sec"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Read Latency (p50/p95/p99)",
+      "type": "timeseries",
+      "id": 3,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(kave_kv_read_duration_seconds_bucket[5s]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(kave_kv_read_duration_seconds_bucket[5s]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(kave_kv_read_duration_seconds_bucket[5s]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "title": "Write Latency - Raft Apply (p50/p95/p99)",
+      "type": "timeseries",
+      "id": 4,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(kave_raft_apply_duration_seconds_bucket[5s]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(kave_raft_apply_duration_seconds_bucket[5s]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(kave_raft_apply_duration_seconds_bucket[5s]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "title": "Raft Leader",
+      "type": "timeseries",
+      "id": 5,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "expr": "kave_raft_is_leader",
+          "legendFormat": "{{pod}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 }
+    },
+    {
+      "title": "Leader Changes Total",
+      "type": "timeseries",
+      "id": 6,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(kave_raft_leader_changes_total[1m])",
+          "legendFormat": "Changes/min"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 }
+    },
+    {
+      "title": "Raft Apply Lag",
+      "type": "timeseries",
+      "id": 7,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "kave_raft_lag",
+          "legendFormat": "Lag entries"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 }
+    },
+    {
+      "title": "Election Duration",
+      "type": "timeseries",
+      "id": 8,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(kave_raft_election_duration_seconds_bucket[1m]))",
+          "legendFormat": "p95"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 }
+    },
+    {
+      "title": "Key Count",
+      "type": "timeseries",
+      "id": 9,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "kave_kv_key_count",
+          "legendFormat": "Total keys"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 32 }
+    },
+    {
+      "title": "Storage Size",
+      "type": "timeseries",
+      "id": 10,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "bytes",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "kave_backend_size_bytes",
+          "legendFormat": "Backend size"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 32 }
+    },
+    {
+      "title": "MVCC Revisions",
+      "type": "timeseries",
+      "id": 11,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "targets": [
+        {
+          "expr": "kave_kv_current_revision",
+          "legendFormat": "Current revision"
+        },
+        {
+          "expr": "kave_kv_compacted_revision",
+          "legendFormat": "Compacted revision"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 32 }
+    },
+    {
+      "title": "Write Errors",
+      "type": "timeseries",
+      "id": 12,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(kave_kv_put_errors_total[5s])",
+          "legendFormat": "PUT errors"
+        },
+        {
+          "expr": "rate(kave_kv_delete_errors_total[5s])",
+          "legendFormat": "DELETE errors"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 }
+    },
+    {
+      "title": "Process Memory",
+      "type": "timeseries",
+      "id": 13,
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes",
+          "legendFormat": "RSS"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["kave", "raft"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Kave",
+  "uid": "kave",
+  "version": 1
+}

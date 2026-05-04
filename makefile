@@ -132,7 +132,9 @@ helm-validate: ## validate template
 	helm template $(APP_NAME) ./charts/kave
 
 helm-lint: ## Lint for mistakes
-	helm lint ./charts/kave
+	helm lint ./charts/kave \
+		--set image.tag=lint-test \
+		--set config.adminAuthToken=lint-test
 
 helm-uninstall:
 	@echo ">> uninstalling chart: ${APP_NAME}..."

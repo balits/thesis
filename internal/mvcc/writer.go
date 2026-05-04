@@ -52,6 +52,9 @@ type writer struct {
 	startRev kv.Revision
 	changes  []*kv.Entry
 
+	newKeys     int64
+	deletedKeys int64
+
 	startTime time.Time
 }
 
@@ -137,10 +140,12 @@ func (w *writer) put(key, value []byte, leaseID int64) error {
 	nextRev := w.startRev.Main + 1
 	createRev := nextRev
 	// create revision defaults to nextRev
-	// or existings keys createrRev
+	// or existings keys createrEv
 	created, _, version, err := w.store.kvIndex.Get(key, nextRev)
 	if err == nil {
 		createRev = created.Main
+	} else {
+		w.newKeys++
 	}
 
 	idxRev := kv.Revision{Main: nextRev, Sub: int64(len(w.changes))}
@@ -209,6 +214,7 @@ func (w *writer) DeleteKey(key []byte) error {
 }
 
 func (w *writer) deleteKey(key []byte) error {
+	w.deletedKeys++
 	nextRev := w.startRev.Main + 1
 	bk := kv.NewKvBucketKey(nextRev, int64(len(w.changes)), true)
 	// TODO: kv.EncodeRevisionAsBucketKey ??
@@ -284,7 +290,7 @@ func (w *writer) End() error {
 		}
 	}
 
-	info, err := w.writeTx.Commit()
+	_, err := w.writeTx.Commit()
 	if err != nil {
 		if hasChanges {
 			nextRev := w.startRev.Main + 1
@@ -300,13 +306,12 @@ func (w *writer) End() error {
 		return fmt.Errorf("%s: %w", msg, err)
 	}
 
-	// todo: fuse this into metrics as gaugeFunc
-	keyDelta := info.NewKeys - info.DeletedKeys
+	keyDelta := w.newKeys - w.deletedKeys
 
 	w.store.metrics.CommitedWritesTotal.Add(1)
 	w.store.metrics.TxnDurationSec.Observe(time.Since(w.startTime).Seconds())
-	w.store.metrics.PutsTotal.Add(float64(info.NewKeys))
-	w.store.metrics.DeletesTotal.Add(float64(info.DeletedKeys))
+	w.store.metrics.PutsTotal.Add(float64(w.newKeys))
+	w.store.metrics.DeletesTotal.Add(float64(w.deletedKeys))
 	w.store.keyCount.Add(keyDelta)
 
 	return nil

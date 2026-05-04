@@ -43,7 +43,7 @@ type KvStore struct {
 
 	logger   *slog.Logger
 	metrics  *metrics.KVMetrics
-	keyCount atomic.Int64 // todo: fuse this into metrics as a gaugeFunc
+	keyCount atomic.Int64 // tracked at MVCC level in writer; exposed as GaugeFunc via metrics
 }
 
 func NewKvStoreWithIndex(reg prometheus.Registerer, logger *slog.Logger, b backend.Backend, index kv.Index) *KvStore {

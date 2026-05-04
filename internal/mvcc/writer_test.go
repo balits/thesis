@@ -638,3 +638,54 @@ func Test_Writer_Abort_ProtectsGlobalRevision(t *testing.T) {
 	endRev, _ := store.Revisions()
 	require.Equal(t, startRev.Main, endRev.Main)
 }
+
+func Test_Writer_KeyCount_IncreasesOnNewKeys(t *testing.T) {
+	t.Parallel()
+	s := newTestKVStore(t)
+	defer s.backend.Close()
+
+	require.Equal(t, int64(0), s.KeyCount())
+
+	w := s.NewWriter()
+	w.Put([]byte("a"), []byte("1"), 0)
+	w.Put([]byte("b"), []byte("2"), 0)
+	w.Put([]byte("c"), []byte("3"), 0)
+	require.NoError(t, w.End())
+
+	require.Equal(t, int64(3), s.KeyCount(), "three new keys should increase count to 3")
+}
+
+func Test_Writer_KeyCount_UnchangedOnUpdate(t *testing.T) {
+	t.Parallel()
+	s := newTestKVStore(t)
+	defer s.backend.Close()
+
+	w := s.NewWriter()
+	w.Put([]byte("k"), []byte("v1"), 0)
+	require.NoError(t, w.End())
+	require.Equal(t, int64(1), s.KeyCount())
+
+	w = s.NewWriter()
+	w.Put([]byte("k"), []byte("v2"), 0)
+	require.NoError(t, w.End())
+
+	require.Equal(t, int64(1), s.KeyCount(), "updating existing key should not change count")
+}
+
+func Test_Writer_KeyCount_DecreasesOnDelete(t *testing.T) {
+	t.Parallel()
+	s := newTestKVStore(t)
+	defer s.backend.Close()
+
+	w := s.NewWriter()
+	w.Put([]byte("a"), []byte("1"), 0)
+	w.Put([]byte("b"), []byte("2"), 0)
+	require.NoError(t, w.End())
+	require.Equal(t, int64(2), s.KeyCount())
+
+	w = s.NewWriter()
+	w.DeleteKey([]byte("a"))
+	require.NoError(t, w.End())
+
+	require.Equal(t, int64(1), s.KeyCount(), "deleting one key should decrease count by 1")
+}
