@@ -235,10 +235,6 @@ func (s *HttpServer) panicRecoveryMiddleware(next http.Handler) http.Handler {
 func (s *HttpServer) adminAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestToken := r.Header.Get(transport.AdminAuthTokenHeaderName)
-		s.logger.Info("DEBUGGING ADMIN_AUTH_TOKEN",
-			"client_sent", requestToken,
-			"server_has", s._adminAuthToken,
-		)
 
 		if len(requestToken) == 0 {
 			s.writeError(w, authErrMsg, errAuthTokenNotFound, http.StatusForbidden)

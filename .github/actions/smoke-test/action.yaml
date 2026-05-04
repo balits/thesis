@@ -39,6 +39,19 @@ runs:
     - name: Install Helm
       uses: azure/setup-helm@v5.0.0
 
+    - name: Install yq
+      shell: bash
+      run: |
+        wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        chmod +x /usr/local/bin/yq
+
+    - name: Patch Chart.yaml appVersion
+      shell: bash
+      env:
+        APP_VERSION: ${{ inputs.image_tag }}
+      run: |
+        yq eval '.appVersion = strenv(APP_VERSION)' -i ./charts/kave/Chart.yaml
+
     # this should set KUBECONFIG inside the smoke job,
     - name: Create kind cluster
       uses: helm/kind-action@v1

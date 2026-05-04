@@ -1,0 +1,19 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-grafana
+  labels:
+    {{- include "kave.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "kave.labels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+{{- end }}
