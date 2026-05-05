@@ -18,6 +18,7 @@ spec:
         {{- include "kave.labels" . | nindent 8 }}
         app.kubernetes.io/component: prometheus
     spec:
+      serviceAccountName: {{ .Release.Name }}-prometheus
       containers:
         - name: prometheus
           image: prom/prometheus:latest
