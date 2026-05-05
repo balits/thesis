@@ -20,8 +20,6 @@ import (
 	"github.com/hashicorp/raft"
 )
 
-const ApplyLagReadinessThreshold uint = 10
-
 type Config struct {
 	Bootstrap      bool
 	Me             peer.Peer
@@ -42,6 +40,16 @@ type ConfigJson struct {
 	CheckpointIntervalMinutes time.Duration         `json:"checkpoint_interval_minutes"`
 	RatelimiterOpts           http.RatelimitOptions `json:"ratelimiter"`
 	MtlsOptions               mtls.Options          `json:"mtls"`
+	RaftOpts                  RaftOpts              `json:"raft"`
+	ApplyLagReadinessThreshold uint                 `json:"apply_lag_readiness_threshold"`
+	ApplyLagThreshold          uint                 `json:"apply_lag_threshold"`
+}
+
+type RaftOpts struct {
+	SnapshotIntervalSec int `json:"snapshot_interval_sec"`
+	SnapshotThreshold   int `json:"snapshot_threshold"`
+	TrailingLogs        int `json:"trailing_logs"`
+	MaxAppendEntries    int `json:"max_append_entries"`
 }
 
 func (cj *ConfigJson) check() error {
@@ -132,7 +140,7 @@ func LoadConfig() *Config {
 	cfg.Bootstrap = strings.HasSuffix(*nodeID, "-0")
 	cfg.Me = me
 	cfg.PodNamespace = optionalString(podNamespace)
-	cfg.RaftCfg = NewDefaultRaftConfig(cfg.Me.NodeID)
+	cfg.RaftCfg = NewDefaultRaftConfig(cfg.Me.NodeID, &cfg.RaftOpts)
 	cfg.AdminAuthToken = *adminAuthToken
 
 	// debug certain fields

@@ -28,24 +28,31 @@ config:
     kind: "boltdb"
     dataDir: "/data"
   compaction:
-    threshold: 5
-    intervalMinutes: 10
-    maxRevGap: 10
+    threshold: 1000
+    intervalMinutes: 60
+    maxRevGap: 50000
   ot:
     slotCount: 32
     slotSize: 64
     tokenTTLSec: 60
   ratelimiter:
     read: 
-      rps: 300
-      burst: 600
+      rps: 100000
+      burst: 200000
     write: 
-      rps: 100
-      burst: 200
+      rps: 100000
+      burst: 200000
   mtls:
     certFile: "/tls/raft/tls.crt"
     keyFile: "/tls/raft/tls.key"
     caFile: "/tls/raft/ca.crt"
+  raft:
+    snapshotIntervalSec: 300
+    snapshotThreshold: 16384
+    trailingLogs: 10240
+    maxAppendEntries: 128
+  applyLagReadinessThreshold: 10
+  applyLagThreshold: 20
 
 serviceConfig:
   externalService:

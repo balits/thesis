@@ -20,18 +20,35 @@ type RaftDependencies struct {
 	HcLogger      hclog.Logger
 }
 
-func NewDefaultRaftConfig(nodeID string) *raft.Config {
+func NewDefaultRaftConfig(nodeID string, opts *RaftOpts) *raft.Config {
+	var o RaftOpts
+	if opts != nil {
+		o = *opts
+	}
+	if o.SnapshotIntervalSec <= 0 {
+		o.SnapshotIntervalSec = 300
+	}
+	if o.SnapshotThreshold <= 0 {
+		o.SnapshotThreshold = 16384
+	}
+	if o.TrailingLogs <= 0 {
+		o.TrailingLogs = 10240
+	}
+	if o.MaxAppendEntries <= 0 {
+		o.MaxAppendEntries = 128
+	}
+
 	return &raft.Config{
 		LocalID:            raft.ServerID(nodeID),
 		ProtocolVersion:    raft.ProtocolVersionMax,
 		HeartbeatTimeout:   2500 * time.Millisecond,
 		ElectionTimeout:    5000 * time.Millisecond,
 		CommitTimeout:      100 * time.Millisecond,
-		MaxAppendEntries:   64,
+		MaxAppendEntries:   o.MaxAppendEntries,
 		ShutdownOnRemove:   true,
-		TrailingLogs:       10240,
-		SnapshotInterval:   120 * time.Second,
-		SnapshotThreshold:  8192,
+		TrailingLogs:       uint64(o.TrailingLogs),
+		SnapshotInterval:   time.Duration(o.SnapshotIntervalSec) * time.Second,
+		SnapshotThreshold:  uint64(o.SnapshotThreshold),
 		LeaderLeaseTimeout: 1000 * time.Millisecond,
 		LogLevel:           "DEBUG",
 	}

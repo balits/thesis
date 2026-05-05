@@ -296,7 +296,7 @@ func testConfig(me peer.Peer, peers string, nodeConfig *config.Config, raftCfg *
 	var _raftCfg *raft.Config
 	if raftCfg == nil {
 		// tweaked config optimized for tests
-		_raftCfg = config.NewDefaultRaftConfig(me.NodeID)
+		_raftCfg = config.NewDefaultRaftConfig(me.NodeID, nil)
 		_raftCfg.ElectionTimeout = 500 * time.Millisecond
 		_raftCfg.HeartbeatTimeout = 100 * time.Millisecond
 		_raftCfg.LeaderLeaseTimeout = 50 * time.Millisecond

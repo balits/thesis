@@ -19,9 +19,14 @@ import (
 
 var (
 	ErrStateMachineError = errors.New("FSM error")
-	// Hiba ha az fsm üres értékkel tér vissza, vagy ha a kívánt subresult üres
-	ErrNilApplyResult = fmt.Errorf("%w: nil result from FSM", ErrStateMachineError)
+	ErrNilApplyResult    = fmt.Errorf("%w: nil result from FSM", ErrStateMachineError)
 )
+
+type ApplyContext struct {
+	Index  uint64
+	Term   uint64
+	NodeID string
+}
 
 type Fsm struct {
 	me             peer.Peer
@@ -35,7 +40,6 @@ type Fsm struct {
 	logger         *slog.Logger
 }
 
-// NewWithEngine creates an fsm with the supplied engine
 func NewWithEngine(logger *slog.Logger, me peer.Peer, b backend.Backend, store *mvcc.KvStore, lm *lease.LeaseManager, om *ot.OTManager, engine *mvcc.Engine) *Fsm {
 	f := &Fsm{
 		me:      me,
@@ -49,7 +53,6 @@ func NewWithEngine(logger *slog.Logger, me peer.Peer, b backend.Backend, store *
 	return f
 }
 
-// New creates an fsm with a newly created engine
 func New(logger *slog.Logger, me peer.Peer, b backend.Backend, store *mvcc.KvStore, lm *lease.LeaseManager, om *ot.OTManager) *Fsm {
 	return NewWithEngine(logger, me, b, store, lm, om, mvcc.NewEngine(store, lm))
 }
@@ -68,16 +71,7 @@ func (f *Fsm) RegisterObservers(obs ...WriteObserver) {
 	f.writeObservers = append(f.writeObservers, obs...)
 }
 
-// Apply should be as fast as possible, therefore:
-// 1) validate command structure and arguments before callig Apply
 func (f *Fsm) Apply(log *raft.Log) any {
-	lastAppliedIndex, _ := f.store.RaftMeta()
-	if log.Index <= lastAppliedIndex {
-		f.logger.Debug("skipping already applied raft log (replay)", "log_index", log.Index, "last_applied", lastAppliedIndex)
-		// safe to return empty result during boot replays here
-		return command.Result{}
-	}
-
 	// this makes test way easier
 	if f.metrics != nil {
 		start := time.Now()
@@ -94,32 +88,21 @@ func (f *Fsm) Apply(log *raft.Log) any {
 		return command.Result{Error: err}
 	}
 
-	f.store.UpdateInmemRaftMeta(log.Index, log.Term)
-
-	var res command.Result
-
-	switch cmd.Kind {
-	case command.KindPut, command.KindDelete, command.KindTxn:
-		res = f.applyKv(cmd)
-	case command.KindLeaseGrant, command.KindLeaseRevoke, command.KindLeaseKeepAlive, command.KindLeaseLookup, command.KindLeaseCheckpoint, command.KindLeaseExpire:
-		res = f.applyLease(cmd)
-	case command.KindCompaction:
-		res = f.applyCompaction(cmd)
-	case command.KindOTWriteAll, command.KindOTGenerateClusterKey:
-		res = f.applyOT(cmd)
-	case "":
-		panic("No command kind specified")
-	default:
-		panic(fmt.Sprintf("Unsupported command kind: %v", cmd.Kind))
+	lastAppliedIndex, _ := f.store.RaftMeta()
+	if log.Index <= lastAppliedIndex {
+		f.logger.Debug("skipping already applied raft log (replay)", "log_index", log.Index, "last_applied", lastAppliedIndex)
+		return command.Result{}
 	}
 
-	// set fields that apply could touch
-	res.Header.RaftTerm = log.Term
-	res.Header.RaftIndex = log.Index
-	res.Header.NodeID = f.me.NodeID
+	f.store.UpdateInmemRaftMeta(log.Index, log.Term)
+
+	res := f.applySingle(ApplyContext{
+		Index:  log.Index,
+		Term:   log.Term,
+		NodeID: f.me.NodeID,
+	}, cmd)
 
 	if res.Error == nil {
-		f.store.PersistRaftMeta()
 		for _, o := range f.writeObservers {
 			o.OnWrite(res.Header.Revision)
 		}
@@ -128,6 +111,45 @@ func (f *Fsm) Apply(log *raft.Log) any {
 	return res
 }
 
+// applySingle applies a decoded, validated command.
+// It dispatches to the domain handlers and assigns header fields.
+//
+// It does NOT perform replay detection, update raft meta, persist state,
+// or notify observers — those are orchestration concerns handled by the caller
+// (Apply or, in the future, ApplyBatch).
+//
+// NOTE: The caller must ensure the log entry has not already been applied
+// and that UpdateInmemRaftMeta has been called beforehand so that
+// domain handlers see the correct raft metadata.
+func (f *Fsm) applySingle(ctx ApplyContext, cmd command.Command) command.Result {
+	var res command.Result
+
+	switch cmd.Kind {
+	case command.KindPut, command.KindDelete, command.KindTxn:
+		res = f.applyKv(cmd)
+	case command.KindLeaseGrant, command.KindLeaseRevoke, command.KindLeaseKeepAlive,
+		command.KindLeaseLookup, command.KindLeaseCheckpoint, command.KindLeaseExpire:
+		res = f.applyLease(cmd)
+	case command.KindCompaction:
+		res = f.applyCompaction(cmd)
+	case command.KindOTWriteAll, command.KindOTGenerateClusterKey:
+		res = f.applyOT(cmd)
+	case "":
+		panic("no command kind specified")
+	default:
+		panic(fmt.Sprintf("unsupported command kind: %v", cmd.Kind))
+	}
+
+	res.Header.RaftTerm = ctx.Term
+	res.Header.RaftIndex = ctx.Index
+	res.Header.NodeID = ctx.NodeID
+
+	return res
+}
+
+// TODO: for ApplyBatch, the mvcc.Engine and other managers would need to accept
+// an external mvcc.Writer so that all entries in a batch share a single transaction.
+// Currently applyKv creates and commits its own writer internally.
 func (f *Fsm) applyKv(cmd command.Command) command.Result {
 	switch cmd.Kind {
 	case command.KindPut, command.KindDelete, command.KindTxn:
@@ -142,68 +164,97 @@ func (f *Fsm) applyKv(cmd command.Command) command.Result {
 	return *res
 }
 
-func (f *Fsm) applyLease(cmd command.Command) (res command.Result) {
+func (f *Fsm) applyLease(cmd command.Command) command.Result {
+	var res command.Result
 	var err error
+
 	switch cmd.Kind {
 	case command.KindLeaseGrant:
-		var lease *lease.Lease
-		lease, err = f.lm.Grant(cmd.LeaseGrant.LeaseID, cmd.LeaseGrant.TTL)
-		if err == nil {
-			res.LeaseGrant = &command.ResultLeaseGrant{
-				TTL:     lease.TTL,
-				LeaseID: lease.ID,
-			}
-		}
-
+		res, err = f.applyLeaseGrant(cmd)
 	case command.KindLeaseRevoke:
-		var found, revoked bool
-		found, revoked, err = f.lm.Revoke(cmd.LeaseRevoke.LeaseID)
-		if err == nil {
-			res.LeaseRevoke = &command.ResultLeaseRevoke{
-				Found:   found,
-				Revoked: revoked,
-			}
-		}
-
+		res, err = f.applyLeaseRevoke(cmd)
 	case command.KindLeaseKeepAlive:
-		var ttl int64
-		ttl, err = f.lm.KeepAlive(cmd.LeaseKeepAlive.LeaseID)
-		if err == nil {
-			res.LeaseKeepAlive = &command.ResultLeaseKeepAlive{
-				TTL:     ttl,
-				LeaseID: cmd.LeaseKeepAlive.LeaseID,
-			}
-		}
-
+		res, err = f.applyLeaseKeepAlive(cmd)
 	case command.KindLeaseLookup:
-		var l *lease.Lease
-		l, err = f.lm.Lookup(cmd.LeaseLookup.LeaseID)
-		if err == nil {
-			res.LeaseLookup = &command.ResultLeaseLookup{
-				LeaseID:      l.ID,
-				OriginalTTL:  l.TTL,
-				RemainingTTL: l.RemainingTTL(),
-			}
-		}
-
+		res, err = f.applyLeaseLookup(cmd)
 	case command.KindLeaseCheckpoint:
-		f.lm.ApplyCheckpoint(*cmd.LeaseCheckpoint)
-
+		err = f.applyLeaseCheckpoint(cmd)
 	case command.KindLeaseExpire:
-		var subres *command.ResultLeaseExpire
-		subres, err = f.lm.ApplyExpired(*cmd.LeaseExpired)
-		if err != nil {
-			res.LeaseExpire = subres
-		}
-
+		res, err = f.applyLeaseExpire(cmd)
 	default:
-		panic(fmt.Sprintf("Unsupported lease command type: %v", cmd.Kind))
+		panic(fmt.Sprintf("unsupported lease command type: %v", cmd.Kind))
 	}
 
 	if err != nil {
-		res.Error = err
+		return command.Result{Error: err}
 	}
 	return res
+}
+
+func (f *Fsm) applyLeaseGrant(cmd command.Command) (command.Result, error) {
+	l, err := f.lm.Grant(cmd.LeaseGrant.LeaseID, cmd.LeaseGrant.TTL)
+	if err != nil {
+		return command.Result{}, err
+	}
+	return command.Result{
+		LeaseGrant: &command.ResultLeaseGrant{
+			TTL:     l.TTL,
+			LeaseID: l.ID,
+		},
+	}, nil
+}
+
+func (f *Fsm) applyLeaseRevoke(cmd command.Command) (command.Result, error) {
+	found, revoked, err := f.lm.Revoke(cmd.LeaseRevoke.LeaseID)
+	if err != nil {
+		return command.Result{}, err
+	}
+	return command.Result{
+		LeaseRevoke: &command.ResultLeaseRevoke{
+			Found:   found,
+			Revoked: revoked,
+		},
+	}, nil
+}
+
+func (f *Fsm) applyLeaseKeepAlive(cmd command.Command) (command.Result, error) {
+	ttl, err := f.lm.KeepAlive(cmd.LeaseKeepAlive.LeaseID)
+	if err != nil {
+		return command.Result{}, err
+	}
+	return command.Result{
+		LeaseKeepAlive: &command.ResultLeaseKeepAlive{
+			TTL:     ttl,
+			LeaseID: cmd.LeaseKeepAlive.LeaseID,
+		},
+	}, nil
+}
+
+func (f *Fsm) applyLeaseLookup(cmd command.Command) (command.Result, error) {
+	l, err := f.lm.Lookup(cmd.LeaseLookup.LeaseID)
+	if err != nil {
+		return command.Result{}, err
+	}
+	return command.Result{
+		LeaseLookup: &command.ResultLeaseLookup{
+			LeaseID:      l.ID,
+			OriginalTTL:  l.TTL,
+			RemainingTTL: l.RemainingTTL(),
+		},
+	}, nil
+}
+
+func (f *Fsm) applyLeaseCheckpoint(cmd command.Command) error {
+	f.lm.ApplyCheckpoint(*cmd.LeaseCheckpoint)
+	return nil
+}
+
+func (f *Fsm) applyLeaseExpire(cmd command.Command) (command.Result, error) {
+	subres, err := f.lm.ApplyExpired(*cmd.LeaseExpired)
+	res := command.Result{
+		LeaseExpire: subres,
+	}
+	return res, err
 }
 
 func (f *Fsm) applyCompaction(cmd command.Command) command.Result {
@@ -212,33 +263,36 @@ func (f *Fsm) applyCompaction(cmd command.Command) command.Result {
 	}
 
 	doneC, err := f.store.Compact(cmd.Compaction.TargetRev)
+	if err != nil {
+		return command.Result{Error: err}
+	}
 	return command.Result{
 		Compaction: &command.CompactionResult{
 			DoneC: doneC,
-			Error: err,
 		},
 	}
 }
 
-func (f *Fsm) applyOT(cmd command.Command) (res command.Result) {
-	var err error
+func (f *Fsm) applyOT(cmd command.Command) command.Result {
 	switch cmd.Kind {
 	case command.KindOTGenerateClusterKey:
-		err = f.om.ApplyGenerateClusterKey(cmd.OTGenerateClusterKey.Key)
-	case command.KindOTWriteAll:
-		var sub *command.ResultOTWriteAll
-		sub, err = f.om.ApplyWriteAll(*cmd.OTWriteAll)
-		if err == nil {
-			res.OtWriteAll = sub
+		if err := f.om.ApplyGenerateClusterKey(cmd.OTGenerateClusterKey.Key); err != nil {
+			return command.Result{Error: err}
 		}
-	default:
-		panic(fmt.Sprintf("applyOT called with non-OT command: %s", cmd.Kind))
-	}
+		return command.Result{}
 
-	if err != nil {
-		res.Error = err
+	case command.KindOTWriteAll:
+		sub, err := f.om.ApplyWriteAll(*cmd.OTWriteAll)
+		if err != nil {
+			return command.Result{Error: err}
+		}
+		return command.Result{
+			OtWriteAll: sub,
+		}
+
+	default:
+		panic(fmt.Sprintf("unsupported OT command type: %v", cmd.Kind))
 	}
-	return res
 }
 
 // Snapshot also should be fast, just take a pointer to the data

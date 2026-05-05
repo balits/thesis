@@ -267,26 +267,25 @@ func (w *writer) End() error {
 	defer func() {
 		w.writeTx.Unlock()        // release db lock
 		w.store.storeMu.RUnlock() // release store lock
-		if hasChanges {
-			w.store.metaMu.Unlock()
-		}
+		w.store.metaMu.Unlock()
 	}()
 
+	w.store.metaMu.Lock()
+
 	if hasChanges {
-		w.store.metaMu.Lock()
 		w.store.currentRev = kv.Revision{Main: w.store.currentRev.Main + 1}
 		err := w.writeTx.UnsafePut(schema.BucketMeta, schema.KeyCurrentRevision, util.EncodeUint64(uint64(w.store.currentRev.Main)))
 		if err != nil {
 			w.store.logger.Warn("writer.End() errored: failed to persist current revision to meta bucket", "error", err)
 		}
+	}
 
-		if w.store.applyIndex > 0 {
-			if err := w.writeTx.UnsafePut(schema.BucketMeta, schema.KeyRaftApplyIndex, util.EncodeUint64(w.store.applyIndex)); err != nil {
-				w.store.logger.Warn("writer.End() errored: failed to persist raft apply index to meta bucket", "error", err)
-			}
-			if err := w.writeTx.UnsafePut(schema.BucketMeta, schema.KeyRaftTerm, util.EncodeUint64(w.store.raftTerm)); err != nil {
-				w.store.logger.Warn("writer.End() errored: failed to persist raft term to meta bucket", "error", err)
-			}
+	if w.store.applyIndex > 0 {
+		if err := w.writeTx.UnsafePut(schema.BucketMeta, schema.KeyRaftApplyIndex, util.EncodeUint64(w.store.applyIndex)); err != nil {
+			w.store.logger.Warn("writer.End() errored: failed to persist raft apply index to meta bucket", "error", err)
+		}
+		if err := w.writeTx.UnsafePut(schema.BucketMeta, schema.KeyRaftTerm, util.EncodeUint64(w.store.raftTerm)); err != nil {
+			w.store.logger.Warn("writer.End() errored: failed to persist raft term to meta bucket", "error", err)
 		}
 	}
 

@@ -29,11 +29,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Used to determine if the apply index lags behind
-// the commit index.
-// TODO: make this configurable or just leave it as is?
-const APPLY_LAG_THRESHOLD = 20
-
 type Node struct {
 	adminAuthToken string
 	Bootstrap      bool
@@ -373,7 +368,7 @@ func (n *Node) initRaft(reg prometheus.Registerer, cfg *config.Config) error {
 	}
 	n.Raft = r
 
-	raftMetrics := metrics.NewRaftMetrics(reg, r, config.ApplyLagReadinessThreshold)
+	raftMetrics := metrics.NewRaftMetrics(reg, r, cfg.ApplyLagReadinessThreshold)
 	n.Fsm.SetMetrics(raftMetrics)
 	c := make(chan raft.Observation, 64) // buffer, so leadership events are not dropped before watcher starts
 	n.RaftEventWatcher = fsm.NewRaftEventWatcher(n.Logger, c, raftMetrics, raft.ServerID(cfg.Me.NodeID))
@@ -396,7 +391,7 @@ func (n *Node) initServices(cfg *config.Config) error {
 		return err
 	}
 	n.DiscoveryService = discoveryService
-	n.RaftService = service.NewRaftService(n.Logger, n.Raft, APPLY_LAG_THRESHOLD, n.KvStore)
+	n.RaftService = service.NewRaftService(n.Logger, n.Raft, uint64(cfg.ApplyLagThreshold), n.KvStore)
 	n.LeaseService = service.NewLeaseService(n.Logger, n.Me, n.KvStore, n.ProposeFunc)
 	n.OtService = service.NewOTService(n.Logger, cfg.Me, n.KvStore, n.OtManager, n.RaftService, n.ProposeFunc)
 	n.KvService = service.NewKVService(n.Logger, cfg.Me, n.KvStore, n.RaftService, cfg.KvOptions, n.ProposeFunc)

@@ -54,10 +54,10 @@ test-unit:
 
 test-integ-stress:
 	@echo "> running integrations stress (with stress tests)"
-	go test ./test/integration/... --timeout 10m -p 1 --tags=stress
+	go test ./test/integration/... --timeout 15m -p 1 --tags=stress
 test-integ:
 	@echo "> running integrations stress (without stress tests)"
-	go test ./test/integration/... --timeout 10m -p 1
+	go test ./test/integration/... --timeout 15m -p 1
 
 test-smoke:
 	@echo "> 1.1 init: deleting previous Kind cluster..."

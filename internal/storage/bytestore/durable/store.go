@@ -37,6 +37,7 @@ func NewStore(opts storage.Options) (bytestore.ByteStore, error) {
 	dbpath := filepath.Join(opts.Dir, dbFileName)
 	db, err := bolt.Open(dbpath, 0600, &bolt.Options{
 		Timeout: 5 * time.Second,
+		NoSync:  true,
 	})
 	if err != nil {
 		return nil, err

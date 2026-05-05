@@ -48,5 +48,13 @@ data:
         "cert_file": {{ .Values.config.mtls.certFile | quote }},
         "key_file": {{ .Values.config.mtls.keyFile | quote }},
         "ca_file": {{ .Values.config.mtls.caFile | quote }}
-      }
+      },
+      "raft": {
+        "snapshot_interval_sec": {{ .Values.config.raft.snapshotIntervalSec }},
+        "snapshot_threshold": {{ .Values.config.raft.snapshotThreshold }},
+        "trailing_logs": {{ .Values.config.raft.trailingLogs }},
+        "max_append_entries": {{ .Values.config.raft.maxAppendEntries }}
+      },
+      "apply_lag_readiness_threshold": {{ .Values.config.applyLagReadinessThreshold }},
+      "apply_lag_threshold": {{ .Values.config.applyLagThreshold }}
     }
