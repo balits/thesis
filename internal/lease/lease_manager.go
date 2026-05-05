@@ -56,8 +56,8 @@ func NewManager(reg prometheus.Registerer, logger *slog.Logger, store *mvcc.KvSt
 		logger:   logger.With("component", "lease_manager"),
 	}
 	activeLeasesFunc := func() int {
-		m.rwlock.Lock()
-		defer m.rwlock.Lock()
+		m.rwlock.RLock()
+		defer m.rwlock.RUnlock()
 		return len(m.leaseMap)
 	}
 	m.metrics = metrics.NewLeaseMetrics(reg, activeLeasesFunc)

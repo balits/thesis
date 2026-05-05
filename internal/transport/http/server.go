@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/balits/kave/internal/lease"
 	"github.com/balits/kave/internal/mvcc"
@@ -177,8 +178,10 @@ func NewHTTPServer(
 	mux.Handle("GET "+RouteStats, chain(http.HandlerFunc(s.handleStats), s.readLimitMiddleware, s.leaderMiddleware)) // stats
 	mux.HandleFunc("GET "+RouteLivez, s.handleLivez)                                                                 // k8s /livez
 	mux.HandleFunc("GET "+RouteReadyz, s.handleReadyz)                                                               // k8s /readyz
-	mux.Handle("GET "+RouteMetrics, promhttp.HandlerFor(reg,                                                         // prometheus metrics
-		promhttp.HandlerOpts{},
+	mux.Handle("GET "+RouteMetrics, http.TimeoutHandler(
+		promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
+		5*time.Second,
+		"metrics timeout",
 	))
 
 	return s
