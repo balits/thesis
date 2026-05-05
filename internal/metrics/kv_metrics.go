@@ -114,7 +114,7 @@ func NewKVMetrics(
 		CommitedWritesTotal: factory.NewCounter(prometheus.CounterOpts{
 			Namespace: "kave",
 			Subsystem: "kv",
-			Name:      "commited_writes_total",
+			Name:      "committed_writes_total",
 			Help:      "Total commited writes operations (put | del | txn).",
 		}),
 		CompactionsTotal: factory.NewCounter(prometheus.CounterOpts{

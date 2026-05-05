@@ -31,7 +31,7 @@
       },
       "targets": [
         {
-          "expr": "rate(kave_kv_committed_writes_total[5s])",
+          "expr": "rate(kave_kv_committed_writes_total[1m])",
           "legendFormat": "Writes/sec"
         }
       ],
@@ -50,7 +50,7 @@
       },
       "targets": [
         {
-          "expr": "rate(kave_kv_reads_total[5s])",
+          "expr": "rate(kave_kv_reads_total[1m])",
           "legendFormat": "Reads/sec"
         }
       ],
@@ -69,15 +69,15 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, rate(kave_kv_read_duration_seconds_bucket[5s]))",
+          "expr": "histogram_quantile(0.50, rate(kave_kv_read_duration_seconds_bucket[1m]))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(kave_kv_read_duration_seconds_bucket[5s]))",
+          "expr": "histogram_quantile(0.95, rate(kave_kv_read_duration_seconds_bucket[1m]))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(kave_kv_read_duration_seconds_bucket[5s]))",
+          "expr": "histogram_quantile(0.99, rate(kave_kv_read_duration_seconds_bucket[1m]))",
           "legendFormat": "p99"
         }
       ],
@@ -96,15 +96,15 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, rate(kave_raft_apply_duration_seconds_bucket[5s]))",
+          "expr": "histogram_quantile(0.50, rate(kave_raft_apply_duration_seconds_bucket[1m]))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(kave_raft_apply_duration_seconds_bucket[5s]))",
+          "expr": "histogram_quantile(0.95, rate(kave_raft_apply_duration_seconds_bucket[1m]))",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(kave_raft_apply_duration_seconds_bucket[5s]))",
+          "expr": "histogram_quantile(0.99, rate(kave_raft_apply_duration_seconds_bucket[1m]))",
           "legendFormat": "p99"
         }
       ],
@@ -261,11 +261,11 @@
       },
       "targets": [
         {
-          "expr": "rate(kave_kv_put_errors_total[5s])",
+          "expr": "rate(kave_kv_put_errors_total[1m])",
           "legendFormat": "PUT errors"
         },
         {
-          "expr": "rate(kave_kv_delete_errors_total[5s])",
+          "expr": "rate(kave_kv_delete_errors_total[1m])",
           "legendFormat": "DELETE errors"
         }
       ],
