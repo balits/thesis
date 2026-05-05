@@ -123,8 +123,8 @@ func (c *KVClient) Put(key string, value []byte) (time.Duration, bool) {
 		fmt.Fprintf(os.Stderr, "PUT err: %v\n", err)
 		return d, false
 	}
+	defer func() { _ = resp.Body.Close() }()
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusBadRequest {
 			c := atomic.AddInt64(&debug400Count, 1)
@@ -152,8 +152,8 @@ func (c *KVClient) Get(key string) (time.Duration, bool) {
 	if err != nil {
 		return d, false
 	}
-	io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
+	_, _ = io.Copy(io.Discard, resp.Body)
 	return d, resp.StatusCode == http.StatusOK
 }
 

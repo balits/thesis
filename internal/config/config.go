@@ -31,18 +31,18 @@ type Config struct {
 }
 
 type ConfigJson struct {
-	LoggerOptions             logutil.Options       `json:"logger"`
-	KvOptions                 kv.Options            `json:"kv"`
-	PeerDiscoveryOptions      peer.DiscoveryOptions `json:"peer_discovery"`
-	StorageOpts               storage.Options       `json:"storage"`
-	CompactionOpts            compaction.Options    `json:"compaction"`
-	OtOpts                    ot.Options            `json:"ot"`
-	CheckpointIntervalMinutes time.Duration         `json:"checkpoint_interval_minutes"`
-	RatelimiterOpts           http.RatelimitOptions `json:"ratelimiter"`
-	MtlsOptions               mtls.Options          `json:"mtls"`
-	RaftOpts                  RaftOpts              `json:"raft"`
-	ApplyLagReadinessThreshold uint                 `json:"apply_lag_readiness_threshold"`
-	ApplyLagThreshold          uint                 `json:"apply_lag_threshold"`
+	LoggerOptions              logutil.Options       `json:"logger"`
+	KvOptions                  kv.Options            `json:"kv"`
+	PeerDiscoveryOptions       peer.DiscoveryOptions `json:"peer_discovery"`
+	StorageOpts                storage.Options       `json:"storage"`
+	CompactionOpts             compaction.Options    `json:"compaction"`
+	OtOpts                     ot.Options            `json:"ot"`
+	CheckpointIntervalMinutes  time.Duration         `json:"checkpoint_interval_minutes"`
+	RatelimiterOpts            http.RatelimitOptions `json:"ratelimiter"`
+	MtlsOptions                mtls.Options          `json:"mtls"`
+	RaftOpts                   RaftOpts              `json:"raft"`
+	ApplyLagReadinessThreshold uint                  `json:"apply_lag_readiness_threshold"`
+	ApplyLagThreshold          uint                  `json:"apply_lag_threshold"`
 }
 
 type RaftOpts struct {

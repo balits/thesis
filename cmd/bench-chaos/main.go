@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	kubeconfig  = flag.String("kubeconfig", "", "path to kubeconfig")
-	namespace   = flag.String("namespace", "kave", "kubernetes namespace")
-	targetURL   = flag.String("target", "http://localhost:8000", "base URL of kave HTTP server")
-	rps         = flag.Int("rps", 200, "write requests per second during chaos test")
-	duration    = flag.Duration("duration", 30*time.Second, "total test duration")
+	kubeconfig = flag.String("kubeconfig", "", "path to kubeconfig")
+	namespace  = flag.String("namespace", "kave", "kubernetes namespace")
+	targetURL  = flag.String("target", "http://localhost:8000", "base URL of kave HTTP server")
+	rps        = flag.Int("rps", 200, "write requests per second during chaos test")
+	duration   = flag.Duration("duration", 30*time.Second, "total test duration")
 )
 
 func main() {
