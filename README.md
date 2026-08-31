@@ -14,7 +14,7 @@ to other environemtns, both local and cloud would be a nice touch.
 
 ### Key features
 
-- [MVCC]: Multi-Version Concurrency Control with monotonic (main, sub) revisions, snapshot-isolated reads, and historical queries
+- [MVCC] Multi-Version Concurrency Control with monotonic (main, sub) revisions, snapshot-isolated reads, and historical queries
 - [Leases]: TTL-based leases with key attachment, distributed expiry through Raft, and leader-driven checkpoint scheduling
 - [Watches]: Push-based watch API over WebSocket with synced/unsynced watcher pools and automatic catch-up
 - [Oblivious Transfer]: 1-out-of-N OT protocol using Ristretto255 elliptic curves for privacy-preserving secret storage
@@ -196,31 +196,31 @@ make fmt
 
 ## Tech stack
 
-- [Language]: Go 1.25
-- [Consensus]: [HashiCorp Raft](https://github.com/hashicorp/raft) with `raft-boltdb` backend
-- [Storage]: [BoltDB](https://github.com/etcd-io/bbolt) (persistent), in-memory B-tree (testing)
-- [Crypto]: [cloudflare/circl](https://github.com/cloudflare/circl) (Ristretto255 for OT, AES-GCM for token encryption)
-- [HTTP]: net/http with custom middleware chain (leader proxy, rate limiting, CORS, panic recovery)
-- [WebSocket]: [coder/websocket](https://github.com/coder/websocket)
-- [Metrics]: [prometheus/client_golang](https://github.com/prometheus/client_golang)
-- [Indexing]: [google/btree](https://github.com/google/btree) for in-memory key index
-- [Testing]: testify, in-process Raft clusters, Kind, golangci-lint
-- [Deployment]: Kubernetes, Helm, cert-manager, Traefik, Let's Encrypt
-- [UI]: interactive SvelteKit for presentation
-- [CI/CD]: GitHub Actions (lint > test > build > deploy > UI)
+- [Language] Go 1.25
+- [Consensus] [HashiCorp Raft](https://github.com/hashicorp/raft) with `raft-boltdb` backend
+- [Storage] [BoltDB](https://github.com/etcd-io/bbolt) (persistent), in-memory B-tree (testing)
+- [Crypto] [cloudflare/circl](https://github.com/cloudflare/circl) (Ristretto255 for OT, AES-GCM for token encryption)
+- [HTTP] net/http with custom middleware chain (leader proxy, rate limiting, CORS, panic recovery)
+- [WebSocket] [coder/websocket](https://github.com/coder/websocket)
+- [Metrics] [prometheus/client_golang](https://github.com/prometheus/client_golang)
+- [Indexing] [google/btree](https://github.com/google/btree) for in-memory key index
+- [Testing] testify, in-process Raft clusters, Kind, golangci-lint
+- [Deployment] Kubernetes, Helm, cert-manager, Traefik, Let's Encrypt
+- [UI] interactive SvelteKit for presentation
+- [CI/CD] GitHub Actions (lint > test > build > deploy > UI)
 
 ## Known issues
 
 There are some things i noted that should be revisited like dead code, old configs, etc.
 
-- [TRACK.md]: this might contain old todos or chores.
-- [Makefile cleanup]: Contains dev commands (k9s, golangci-lint, manual kubectl operations). The `bin/` directory with project-specific tools could be replaced by a Nix flake or similar.
-- [`cmd/client/main.go`]:Uses old route paths (`/v1/kv/get` instead of `/v1/kv/range`)
-- [Hungarian comments]: Doc comments are mixed between hungarian and english, and all design docs (`docs/notes/`) are in Hungarian. The existing TRACK.md also contains this as a chore.
-- [Observability gap]: Prometheus metrics are instrumented across all subsystems, but no Grafana dashboards are actively used. The Helm chart includes Grafana templates and a kave.json dashboard, but this was not the focus of the thesis.
-- [Missing LICENSE file]: Only `LICENSE-etcd` exists (Apache 2.0, for borrowed KV index code from etcd). The project's own license is not defined.
-- [BoltSnapshotMetrics TODO]: Snapshot metrics are not yet implemented (noted in code and TRACK.md).
-- [`BatchingFSM`]: Listed as a future optimization in the TODO, batching FSM applies to reduce per-command overhead.
-- [`wire.go` bug]: `serverErrorPayload.MarshalJSON` has an inverted nil check on the `Cause` field (prints error message when it should be nil, and vice versa).
-- [`LeaseManager.newManager`]: Contains `m.rwlock.Lock()` instead of `m.rwlock.Unlock()` in the active leases metric callback (deadlock risk on metric collection).
-- [Civo-specific CI/deployment]: The GitHub Actions workflows and Helm chart reference Civo cloud infrastructure. There is no generalized deployment path for other cloud providers. Ideally the Helm chart should work with any `--kubeconfig` without Civo-specific assumptions.
+- [TRACK.md] this might contain old todos or chores.
+- [Makefile cleanup] Contains dev commands (k9s, golangci-lint, manual kubectl operations). The `bin/` directory with project-specific tools could be replaced by a Nix flake or similar.
+- [`cmd/client/main.go`] Uses old route paths (`/v1/kv/get` instead of `/v1/kv/range`)
+- [Hungarian comments] Doc comments are mixed between hungarian and english, and all design docs (`docs/notes/`) are in Hungarian. The existing TRACK.md also contains this as a chore.
+- [Observability gap] Prometheus metrics are instrumented across all subsystems, but no Grafana dashboards are actively used. The Helm chart includes Grafana templates and a kave.json dashboard, but this was not the focus of the thesis.
+- [Missing LICENSE file] Only `LICENSE-etcd` exists (Apache 2.0, for borrowed KV index code from etcd). The project's own license is not defined.
+- [BoltSnapshotMetrics TODO] Snapshot metrics are not yet implemented (noted in code and TRACK.md).
+- [`BatchingFSM`] Listed as a future optimization in the TODO, batching FSM applies to reduce per-command overhead.
+- [`wire.go` bug] `serverErrorPayload.MarshalJSON` has an inverted nil check on the `Cause` field (prints error message when it should be nil, and vice versa).
+- [`LeaseManager.newManager`] Contains `m.rwlock.Lock()` instead of `m.rwlock.Unlock()` in the active leases metric callback (deadlock risk on metric collection).
+- [Civo-specific CI/deployment] The GitHub Actions workflows and Helm chart reference Civo cloud infrastructure. There is no generalized deployment path for other cloud providers. Ideally the Helm chart should work with any `--kubeconfig` without Civo-specific assumptions.
