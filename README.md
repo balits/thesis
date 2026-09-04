@@ -1,15 +1,15 @@
 # kave
 
 A Raft-backed distributed key-value store with MVCC, leases, watches, and Oblivious Transfer-based secret storage.
-Built as a university thesis project, inspired by [etcd](https://github.com/etcd-io/etcd) with an HTTP API instead of gRPC.
+Built as a university thesis project, inspired by [etcd](https://github.com/etcd-io/etcd).
 
 ## Overview
 
-`kave` is a distributed systems project implementing a consistent, fault-tolerant key-value store with snapshot isolation. It uses HashiCorp's Raft library for consensus, BoltDB for durable storage, and exposes a RESTful HTTP API.
+`kave` is a distributed systems project implementing a consistent, fault-tolerant key-value store with snapshot isolation. It uses HashiCorp's Raft library for consensus, BoltDB for durable storage, and exposes an HTTP API.
 
-The project was designed and deployed on Kubernetes (Civo cloud) as part of a thesis assignment. The core distributed systems functionality is complete and tested;
+The project was designed and deployed on Kubernetes (configured for Civo cloud). The core distributed systems functionality is complete and tested;
 the deployment infrastructure and observability stack were functional but have room for improvement, see [Known Issues](#known-issues).
-Additionally the project was definetly a learning project, so revising the kuberenteset deployment infrastructure to be more generally applicable
+Additionally the project was definetly a learning project, so revising the kubernetes deployment infrastructure to be more generally applicable
 to other environemtns, both local and cloud would be a nice touch.
 
 ### Key features
